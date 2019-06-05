@@ -1,0 +1,119 @@
+---
+project: Kolcun Project
+kind: PIPELINE
+name: Update OC Deployment
+enabled: true
+description: update OC Deployment
+concurrency: 10
+ciWorkspace:
+  endpoint: ''
+  image: ''
+  registry: ''
+  path: ''
+  cache:
+  - ''
+stageOrder:
+- Update AWS Deployment
+- QA Testing and Approval
+- Update OC in Azure
+stages:
+  Update OC in Azure:
+    taskOrder:
+    - Delete Current Azure Deployment
+    - Deploy Azure Deployment
+    - update Opencart theme
+    tasks:
+      update Opencart theme:
+        type: SSH
+        input:
+          privatekey: ''
+          password: s2enc~QLJhR9ZEpy6UAgaHLj+mGA==
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: ' ${Update OC in Azure.Deploy Azure Deployment.output.deploymentDetails.resources.mysql.address}'
+          arguments: [
+            ]
+          passphrase: ''
+          script: |-
+            git clone https://github.com/mcclanc/oc-electro-theme.git
+            cd oc-electro-theme
+            mysql -u ocuser opencart < cmd.txt
+          username: demouser
+      Delete Current Azure Deployment:
+        type: Blueprint
+        ignoreFailure: true
+        input:
+          _deploymentFlag: false
+          action: DeleteDeployment
+          deploymentName: OC-Azure Env
+      Deploy Azure Deployment:
+        type: Blueprint
+        input:
+          blueprint: OpenCard Demo
+          action: CreateDeployment
+          deploymentName: OC-Azure v2 Environment
+          version: '5.0'
+          parameters: {
+            pass: VMware1!,
+            user: demouser,
+            placement: AWS
+          }
+  Update AWS Deployment:
+    taskOrder:
+    - Delete Current AWS Deployment
+    - Deploy AWS Deployment
+    - Update OC Theme
+    tasks:
+      Delete Current AWS Deployment:
+        type: Blueprint
+        ignoreFailure: true
+        input:
+          _deploymentFlag: false
+          action: DeleteDeployment
+          deploymentName: OC-AWS Env
+      Update OC Theme:
+        type: SSH
+        input:
+          privatekey: ''
+          password: s2enc~QLJhR9ZEpy6UAgaHLj+mGA==
+          workingDirectory: ''
+          environmentVariables: {
+            }
+          host: ${Update AWS Deployment.Deploy AWS Deployment.output.deploymentDetails.resources.mysql.address}
+          arguments: [
+            ]
+          passphrase: ''
+          script: |-
+            git clone https://github.com/mcclanc/oc-electro-theme.git
+            cd oc-electro-theme
+            mysql -u ocuser opencart < cmd.txt
+          username: demouser
+      Deploy AWS Deployment:
+        type: Blueprint
+        input:
+          blueprint: OpenCard Demo
+          action: CreateDeployment
+          deploymentName: OC-AWS v2 Environment
+          version: '5.0'
+          parameters: {
+            pass: VMware1!,
+            user: demouser,
+            placement: AWS
+          }
+  QA Testing and Approval:
+    taskOrder:
+    - QA Testing and Approval
+    tasks:
+      QA Testing and Approval:
+        type: UserOperation
+        input:
+          summary: Approve this!
+          pipelineName: ${name}
+          expirationInDays: 3
+          approverGroups: [
+            ]
+          approvers: [
+            mkolcun@vmware.com]
+          description: Approve this!
+          sendemail: false

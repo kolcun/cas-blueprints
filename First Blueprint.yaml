@@ -1,0 +1,91 @@
+formatVersion: 1
+inputs:
+  SelectCloud:
+    type: string
+    title: Pick One Yo!
+    default: 'env:aws'
+    enum:
+      - 'env:azure'
+      - 'env:aws'
+  SelectCloud2:
+    type: string
+    title: Pick One Yo!
+    default: 'env:aws'
+    enum:
+      - 'env:azure'
+      - 'env:aws'
+  hostname1:
+    type: string
+    title: Hostname One
+    default: myhostnameone
+  hostname2:
+    type: string
+    title: Hostname Two
+    default: myhostnametwo
+  user:
+    type: string
+    title: Username for SSH
+    description: The username you would like to have for the installation.
+    default: mkolcun
+  sshkey:
+    type: string
+    encrypted: true
+    title: Enter SSH Key.
+    description: The SSH-Key for connectivity
+    default: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDJN6vbYmq+g30tcru1lwiRpUm4eyp43sJxaa2C1/HN0Jw+nysMOG61vxijDv8owdmJp27WTmumw4jILRCgW54mA8GXvud5QvADGWaFtDlpGMIkmTLYvr2UVqBlYvPqhc3EEKNjRmvt+ZPGZa0Vp/xpUVZazSV+v2d+A+JkGTEzflshwFYKEz8RQRCQK3CLIWjr55eVO8xnn4tXNCeI0dQ83mWFGspz0h8aVzeWSyvqkxHC6VirAy42TyoWFV+UpYB54+TDJdm0xxdSsYrHgk/RDlh3Su2fbOT8jPbmGcG58TT6SL2+SJYCYbdNciEuocRwT4la+8H2FE4/L+QXXHpI13qcWjo5t505+nXPBNKEehX1/dGe0+tnfy3tMcEdjR3G2lofiJgE7QLlQY+LIp8gHmJF+bD9KMYQXyE2f3Kxk4K7olRrL8bMFnHKRShKok13AHo/fcWY8YfQqxu5acz2APRkRD2slHpDSBaXThCop0X2tgYFAvJBX6VhqUGSPe9cwzFf46gVvyIqqkDBqeya+oROIA6nTH8Qc2v0Z9NXME2vKRn5CoUHGT2ORkNhWVKHHlH9QcA/dmDCbOYmbl5afD90iev0Afppa3EbpYcSGq4zaaf6qhkHGcm5XtVKlezX6fuhMdakKtnIsfoKeHJwqhozXhdbWWL0ExPivHtphQ== mkolcun@vmware.com
+resources:
+  Cloud_Machine_2:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 0
+    constraints:
+      - tag: '${input.SelectCloud2}'
+    properties:
+      cloudConfig: |
+        #cloud-config
+        hostname: ${input.hostname2}
+        users:
+          - name: ${input.user}
+            ssh-authorized-keys:
+              - ${input.sshkey}
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            groups: sudo
+            shell: /bin/bash
+        packages:
+          - nginx
+        runcmd:
+          - echo "This file was created by Cloud-Init in environment "${input.SelectCloud2} >> /tmp/environment.txt
+      image: Ubuntu
+      flavor: Medium
+      newName: '{input.hostname2}'
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 1
+        - 1
+    properties:
+      cloudConfig: |
+        #cloud-config
+        hostname: ${input.hostname1}
+        users:
+          - name: ${input.user}
+            ssh-authorized-keys:
+              - ${input.sshkey}
+            sudo: ['ALL=(ALL) NOPASSWD:ALL']
+            groups: sudo
+            shell: /bin/bash
+        runcmd:
+          - echo "This file was created by Cloud-Init in environment "${input.SelectCloud} >> /tmp/environment.txt
+      image: Ubuntu
+      flavor: Medium
+      newName: '{input.hostname1}'
+      constraints:
+        - tag: '${input.SelectCloud}'
+      tags:
+        - key: aaa
+          value: bbb
+        - key: ccc
+          value: ddd

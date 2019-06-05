@@ -1,0 +1,30 @@
+formatVersion: 1
+inputs:
+  SelectCloud:
+    type: string
+    enum:
+      - 'env:aws'
+      - env.azure
+resources:
+  Cloud_Machine_2:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 0
+        - 0
+    properties:
+      image: Ubuntu
+      flavor: Medium
+      constraints:
+        - tag: '‘! ${input.SelectCloud}’'
+  Cloud_Machine_1:
+    type: Cloud.Machine
+    metadata:
+      layoutPosition:
+        - 1
+        - 1
+    properties:
+      image: Ubuntu
+      flavor: Medium
+      constraints:
+        - tag: '‘${input.SelectCloud}’'

@@ -1,0 +1,79 @@
+---
+project: Kolcun Project
+kind: PIPELINE
+name: OpenCart Deployment Pipeline
+enabled: true
+concurrency: 10
+ciWorkspace:
+  endpoint: ''
+  image: ''
+  registry: ''
+  path: ''
+  cache:
+  - ''
+stageOrder:
+- OC Deploy to AWS
+- QA Testing and Approval
+- Deployment to Azure
+stages:
+  OC Deploy to AWS:
+    taskOrder:
+    - Deploy OC to AWS
+    tasks:
+      Deploy OC to AWS:
+        type: Blueprint
+        input:
+          blueprint: OpenCard Demo
+          action: CreateDeployment
+          deploymentName: OC-AWS Env
+          version: '4.0'
+          parameters: {
+            pass: VMware1!,
+            user: demouser,
+            placement: AWS
+          }
+  Deployment to Azure:
+    taskOrder:
+    - Deploy OC to Azure
+    tasks:
+      Deploy OC to Azure:
+        type: Blueprint
+        input:
+          blueprint: OpenCard Demo
+          action: CreateDeployment
+          deploymentName: OC-Azure Env
+          version: '4.0'
+          parameters: {
+            pass: VMware1!,
+            user: demouser,
+            placement: AWS
+          }
+  QA Testing and Approval:
+    taskOrder:
+    - QA Approval
+    tasks:
+      QA Approval:
+        type: UserOperation
+        endpoints:
+          emailServer: Codestream-Default-Email
+        input:
+          summary: QA Approval Notification
+          pipelineName: ${name}
+          expirationInDays: 3
+          approverGroups: [
+            ]
+          approvers: [
+            mkolcun@vmware.com]
+          description: "Please perform QA test and approval for the deployment to Production.\n \nYour\
+            \ Test environment can be accessed here:\n\n${OC Deploy to AWS.Deploy OC to AWS.output.deploymentDetails.resources.frontend.address}\n"
+          sendemail: true
+notifications:
+  email:
+  - stage: Deployment to Azure
+    event: SUCCESS
+    subject: Initial Deployment Complete
+    task: Deploy OC to Azure
+    endpoint: Codestream-Default-Email
+    body: it's done yo!
+    to:
+    - mkolcun@vmware.com
